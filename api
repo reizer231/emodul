@@ -1,0 +1,135 @@
+eModul API Version 1.0
+
+1. Authentication token:
+
+POST https://emodul.eu/api/v1/authentication
+
+POST data example:
+{"username": "test", "password": "test"}
+
+Response data example:
+{"authenticated": true, "user_id": 240471648, "token": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJ1c2VyX2lkIjoyNDA0NzE2NDgsImlhdCI6MTUyNjk5ODQxOX0.opQW1yTczP7vuiIkI1Skuy8yJ8eGhYrlYUKmll9P88M"}
+
+------------------------------------------------------------------------------------------------------------------------
+
+2. Authenticating requests:
+
+Each request must contain HTTP Authorization header with token:
+Authorization: Bearer + token
+
+Example:
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJ1c2VyX2lkIjoyNDA0NzE2NDgsImlhdCI6MTUyNjk5ODQxOX0.opQW1yTczP7vuiIkI1Skuy8yJ8eGhYrlYUKmll9P88M
+
+------------------------------------------------------------------------------------------------------------------------
+
+3. List of account modules:
+
+GET https://emodul.eu/api/v1/users/{user_id}/modules
+
+------------------------------------------------------------------------------------------------------------------------
+
+4. Module data:
+
+GET https://emodul.eu/api/v1/users/{user_id}/modules/{module_udid}
+
+------------------------------------------------------------------------------------------------------------------------
+
+5. Change zone parameters (L-7, L-8, WiFi 8S, ST-8S WiFi):
+
+POST https://emodul.eu/api/v1/users/{user_id}/modules/{module_udid}/zones
+
+5.1 Set constant temperature:
+
+POST data example:
+
+{
+    "mode": {
+        "id": 210,
+        "parentId": 101,
+        "mode": "constantTemp",
+        "constTempTime": 0,
+        "setTemperature": 220,
+        "scheduleIndex": 0
+    }
+}
+
+5.2 Set constant temperature with time limitation:
+
+POST data example:
+
+{
+    "mode": {
+        "id": 210,
+        "parentId": 101,
+        "mode": "timeLimit",
+        "constTempTime": 60,
+        "setTemperature": 220,
+        "scheduleIndex": 0
+    }
+}
+
+5.4 Turn on zone:
+
+POST data example:
+
+{
+    "zone": {
+        "id": 101,
+        "zoneState": "zoneOn"
+    }
+}
+
+5.5 Turn off zone:
+
+POST data example:
+
+{
+    "zone": {
+        "id": 101,
+        "zoneState": "zoneOff"
+    }
+}
+
+------------------------------------------------------------------------------------------------------------------------
+6. Setting schedules:
+
+6.1 Local zone schedules:
+
+POST https://emodul.eu/api/v1/users/{user_id}/modules/{module_udid}/zones/{zone_id}/local_schedule
+
+POST data example:
+
+{
+    modeId = 100
+    schedule = {
+            id: 150,
+            index: -1,
+            p0Days: ["1", "1", "1", "1", "1", "0", "0"],
+            p0Intervals: [{start:0, stop: 480, temp: 180}, {start: 480, stop: 960, temp: 240}],
+            p0SetbackTemp: 200,
+            p1Days: ["0", "0", "0", "0", "0", "1", "1"],
+            p1Intervals: [{start:480, stop: 1320, temp: 260}],
+            p1SetbackTemp: 210
+        }
+}
+
+modeId(integer):                                   id of the mode object (nakĹadka) connected to the zone
+schedule(object)    id(integer):                   id of the global schedule connected to specified module
+                    index(integer):                index of the global schedule (0 to 4)
+                    p0Days(array of strings):      array of days turned on/off for program 1(1 - on, 0 - off). Values must be opposites of p1Days.
+                    p0Intervals(array of objects): group of intervals for program 1. Maximum 3 intervals (can be empty)
+                                                    - each interval requires 3 properties: start, stop and temp
+                                                    - start/stop define the starting/stopping times for the interval
+                                                    - start/stop represent time in minutes. Min 0, Max 1440
+                                                    - temp defines the temperature for the interval (x10). Min 50 max 350.
+                                                    eg. {start: 480, stop: 960, temp 200} from 8:00 - 16:00 temperature will be 20 degrees celsius
+                    p0SetbackTemp(integer):         temperature for anytime not covered by p0Intervals. Min 50 max 350.
+                    p1Days(array of strings):       array of days turned on/off for program 2(1 - on, 0 - off). Values must be opposites of p0Days.
+                    p1Intervals(array of objects):  group of intervals for program 2. Maximum 3 intervals (can be empty)
+                                                    - each interval requires 3 properties: start, stop and temp
+                                                    - start/stop define the starting/stopping times for the interval
+                                                    - start/stop represent time in minutes. Min 0, Max 1440
+                                                    - temp defines the temperature for the interval (x10). Min 50 max 350.
+                                                    eg. {start: 480, stop: 960, temp 200} from 8:00 - 16:00 temperature will be 20 degrees celsius
+                    p1SetbackTemp(integer):         temperature for any time not covered by p1Intervals. Min 50 max 350.
+
